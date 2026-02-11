@@ -21,7 +21,7 @@ public class MultiplierThread extends Thread {
         for (int k = 0; k < m1.getCols(); k++) {
             result += m1.getValue(row, k) * m2.getValue(k, col);
         }
-        System.out.println("Hilo [" + row + "][" + col + "] termin. Resultado: " + result);
+        System.out.println("Hilo [" + row + "][" + col + "] terminado. Resultado: " + result);
     }
 
     public int getResult() {

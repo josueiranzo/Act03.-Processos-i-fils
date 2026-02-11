@@ -1,6 +1,8 @@
 package com.matrix;
 
 import java.io.IOException;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Scanner;
 
 public class Main {
@@ -11,6 +13,7 @@ public class Main {
         w1 = h1 = w2 = h2 = 0;
         boolean valid = false;
         while (!valid) {
+            if (!scanner.hasNextLine()) break;
             String line = scanner.nextLine();
             String[] parts = line.trim().split("\\s+");
             if (parts.length != 4) {
@@ -37,16 +40,55 @@ public class Main {
             valid = true;
         }
 
-        Matrix m1 = new Matrix(h1, w1);
-        Matrix m2 = new Matrix(h2, w2);
+        boolean continueMultiplication = true;
+        while (continueMultiplication) {
+            Matrix m1 = new Matrix(h1, w1);
+            Matrix m2 = new Matrix(h2, w2);
+            Matrix resultMatrix = new Matrix(h1, w2);
 
-        fillMatrix(scanner, m1, "Matriz 1");
-        fillMatrix(scanner, m2, "Matriz 2");
+            fillMatrix(scanner, m1, "Matriz 1");
+            fillMatrix(scanner, m2, "Matriz 2");
 
-        System.out.println("Calculando matriz resultante...");
-        for (int i = 0; i < h1; i++) {
-            for (int j = 0; j < w2; j++) {
-                new MultiplierThread(m1, m2, i, j).start();
+            System.out.println("Calculando matriz resultante...");
+            List<MultiplierThread> threads = new ArrayList<>();
+            for (int i = 0; i < h1; i++) {
+                for (int j = 0; j < w2; j++) {
+                    MultiplierThread t = new MultiplierThread(m1, m2, i, j);
+                    threads.add(t);
+                    t.start();
+                }
+            }
+
+            for (MultiplierThread t : threads) {
+                try {
+                    t.join();
+                    resultMatrix.setValue(t.getRow(), t.getCol(), t.getResult());
+                } catch (InterruptedException e) {
+                    System.err.println("Error esperando al hilo: " + e.getMessage());
+                }
+            }
+
+            System.out.println("\nMatriz Resultante:");
+            resultMatrix.display();
+
+            System.out.print("\n¿Deseas guardar la matriz resultante en un archivo? (s/n): ");
+            String saveOption = scanner.next();
+            if (saveOption.equalsIgnoreCase("s")) {
+                System.out.print("Introduce el nombre del archivo: ");
+                String filename = scanner.next();
+                try {
+                    resultMatrix.saveToFile(filename);
+                    System.out.println("Matriz guardada con éxito.");
+                } catch (IOException e) {
+                    System.err.println("Error al guardar el archivo: " + e.getMessage());
+                }
+            }
+
+            System.out.print("\n¿Deseas realizar otra multiplicación con los mismos tamaños? (s/n): ");
+            String again = scanner.next();
+            continueMultiplication = again.equalsIgnoreCase("s");
+            if (continueMultiplication) {
+                scanner.nextLine(); // Consumir nueva línea restante
             }
         }
 
